@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宇哥 vs 检哥 · 赛博回合制对战</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===================== 背景装饰层（赛博网格 + 扫描线） ===================== -->
+<div class="bg-grid"></div>
+<div class="bg-scanline"></div>
+
+<!-- ===================== 顶部栏：标题 / 模式 / 音效开关 / 重开 ===================== -->
+<header class="top-bar">
+  <h1 class="game-title">宇哥 <span class="vs-mini">VS</span> 检哥</h1>
+  <div class="top-controls">
+    <label class="mode-label" for="mode-select">对战模式</label>
+    <select id="mode-select">
+      <option value="ai">人机对战（AI 控制检哥）</option>
+      <option value="pvp">本地双人</option>
+    </select>
+    <label class="mode-label" for="ai-side-select">AI 控制</label>
+    <select id="ai-side-select" title="人机模式下由 AI 控制哪一方">
+      <option value="jiange">检哥（你玩宇哥）</option>
+      <option value="yuge">宇哥（你玩检哥）</option>
+    </select>
+    <button id="btn-mute" class="ctl-btn" title="音效开关">🔊 音效</button>
+    <button id="btn-about" class="ctl-btn" title="关于">ℹ️ 关于</button>
+    <button id="btn-restart" class="ctl-btn" title="重新开始">⟳ 重开</button>
+  </div>
+</header>
+
+<!-- ===================== 战场主舞台 ===================== -->
+<main id="stage">
+
+  <!-- 宇哥（左）角色卡 -->
+  <section class="char-card p1" id="card-p1">
+    <div class="card-avatar"><img id="avatar-p1" alt="宇哥头像"></div>
+    <div class="card-info">
+      <div class="card-name-row">
+        <span class="card-name" id="name-p1">宇哥</span>
+        <span class="card-role" id="role-p1">高爆发 · 视觉系</span>
+      </div>
+      <div class="bar hp-bar"><div class="bar-fill hp-fill" id="hp-fill-p1"></div></div>
+      <div class="bar-txt"><span id="hp-text-p1">1100/1100</span><span class="bar-tag">HP</span></div>
+      <div class="bar energy-bar"><div class="bar-fill en-fill" id="en-fill-p1"></div></div>
+      <div class="bar-txt"><span id="en-text-p1">0/100</span><span class="bar-tag">⚡能量</span></div>
+      <div class="card-status" id="status-p1"></div>
+    </div>
+    <div class="card-tag tag-p1">P1</div>
+  </section>
+
+  <!-- 中间：VS 徽章 + 回合横幅 -->
+  <section class="stage-center">
+    <div class="vs-badge">VS</div>
+    <div class="turn-banner" id="turn-banner">点击「战斗开始」</div>
+    <div class="round-badge" id="round-badge">回合 0</div>
+  </section>
+
+  <!-- 检哥（右）角色卡 -->
+  <section class="char-card p2" id="card-p2">
+    <div class="card-avatar"><img id="avatar-p2" alt="检哥头像"></div>
+    <div class="card-info">
+      <div class="card-name-row">
+        <span class="card-name" id="name-p2">检哥</span>
+        <span class="card-role" id="role-p2">控制 · 策略型</span>
+      </div>
+      <div class="bar hp-bar"><div class="bar-fill hp-fill" id="hp-fill-p2"></div></div>
+      <div class="bar-txt"><span id="hp-text-p2">1250/1250</span><span class="bar-tag">HP</span></div>
+      <div class="bar energy-bar"><div class="bar-fill en-fill" id="en-fill-p2"></div></div>
+      <div class="bar-txt"><span id="en-text-p2">0/100</span><span class="bar-tag">⚡能量</span></div>
+      <div class="card-status" id="status-p2"></div>
+    </div>
+    <div class="card-tag tag-p2">P2</div>
+  </section>
+
+</main>
+
+<!-- ===================== 底部：技能面板 ×2 + 战斗日志 ===================== -->
+<div class="bottom-area">
+
+  <!-- 宇哥技能面板 -->
+  <section class="skill-panel sp1" id="panel-p1">
+    <h3 class="panel-title" id="panel-title-p1">宇哥 · 技能</h3>
+    <button class="skill-btn sb-p1" data-skill="yuge_basic">
+      <span class="sb-icon">👊</span>
+      <span class="sb-name">平A</span>
+      <span class="sb-desc">55~80 物理 · 15%暴击</span>
+      <span class="sb-cost">10 ⚡</span>
+    </button>
+    <button class="skill-btn sb-p1" data-skill="yuge_skill">
+      <span class="sb-icon">🔥</span>
+      <span class="sb-name">志哥之怒</span>
+      <span class="sb-desc">下击必暴+灼烧40+直伤140 · CD1</span>
+      <span class="sb-cost">30 ⚡</span>
+    </button>
+    <button class="skill-btn sb-p1 ult-btn" data-skill="yuge_ult">
+      <span class="sb-icon">🌌</span>
+      <span class="sb-name">宇哥降临</span>
+      <span class="sb-desc">鸟都不鸟你</span>
+      <span class="sb-cost">90 ⚡</span>
+    </button>
+  </section>
+
+  <!-- 战斗日志 -->
+  <section class="log-panel" id="log-panel">
+    <h3 class="panel-title">战斗日志</h3>
+    <div class="log-body" id="log-body"></div>
+  </section>
+
+  <!-- 检哥技能面板 -->
+  <section class="skill-panel sp2" id="panel-p2">
+    <h3 class="panel-title" id="panel-title-p2">检哥 · 技能</h3>
+    <button class="skill-btn sb-p2" data-skill="jiange_basic">
+      <span class="sb-icon">🎯</span>
+      <span class="sb-name">精准打击</span>
+      <span class="sb-desc">65~90 物理 · 稳定</span>
+      <span class="sb-cost">10 ⚡</span>
+    </button>
+    <button class="skill-btn sb-p2" data-skill="jiange_skill">
+      <span class="sb-icon">👁️</span>
+      <span class="sb-name">检哥的凝视</span>
+      <span class="sb-desc">眩晕1回合 · 减防30% · CD1</span>
+      <span class="sb-cost">30 ⚡</span>
+    </button>
+    <button class="skill-btn sb-p2 ult-btn" data-skill="jiange_ult">
+      <span class="sb-icon">📋</span>
+      <span class="sb-name">绝对检阅</span>
+      <span class="sb-desc">各就各位</span>
+      <span class="sb-cost">110 ⚡</span>
+    </button>
+  </section>
+
+</div>
+
+<!-- ===================== 特效层 ===================== -->
+<!-- 飘字层：伤害数字 / 状态提示 -->
+<div id="float-layer"></div>
+<!-- 粒子层：检哥大招「绝对检阅」特效 -->
+<canvas id="fx-canvas" class="fx-hidden"></canvas>
+
+<!-- ===================== 宇哥大招演出 Overlay =====================
+     ┌──────────────────────────────────────────────────────┐
+     │  素材加载接口：优先使用 <video>；若未提供视频则退回    │
+     │  静态图片 p.jpg（ken-burns 缩放演出）或图片序列帧。    │
+     │  TODO: 强制替换为宇哥大招专属素材路径@p.jpg ，并确保   │
+     │  素材播放完毕后再结算伤害。具体逻辑见 script.js。      │
+     └──────────────────────────────────────────────────────┘ -->
+<div id="ult-overlay" class="ult-hidden">
+  <img id="ult-img" alt="宇哥大招素材">
+  <video id="ult-video" preload="auto" playsinline></video>
+  <div class="ult-vignette"></div>
+  <div class="ult-title" id="ult-title">宇 哥 降 临</div>
+  <div class="ult-flash"></div>
+</div>
+
+<!-- ===================== 开场界面（点击=解锁音频） ===================== -->
+<div id="start-screen">
+  <div class="start-box">
+    <h1 class="start-title">宇哥 <span class="vs-mini">VS</span> 检哥</h1>
+    <p class="start-sub">赛博回合制对战 · 双人轮流 / 人机对战</p>
+    <label class="mode-label" for="start-mode">选择对战模式</label>
+    <select id="start-mode">
+      <option value="ai">人机对战（AI 控制检哥）</option>
+      <option value="pvp">本地双人</option>
+    </select>
+    <label class="mode-label" for="start-ai-side">AI 控制哪一方</label>
+    <select id="start-ai-side">
+      <option value="jiange">检哥（你玩宇哥）</option>
+      <option value="yuge">宇哥（你玩检哥）</option>
+    </select>
+    <button id="btn-start" class="start-btn">⚔️ 战 斗 开 始</button>
+    <p class="start-hint">提示：可用键盘 1 / 2 / 3 快速释放技能</p>
+  </div>
+</div>
+
+<!-- ===================== 胜负弹窗 ===================== -->
+<div id="modal" class="modal-hidden">
+  <div class="modal-box" id="modal-box">
+    <h2 id="modal-title">胜 利</h2>
+    <p id="modal-sub"></p>
+    <button id="btn-restart-modal" class="start-btn">⟳ 重新开始</button>
+  </div>
+</div>
+
+<!-- ===================== 首次启动声明（仅在手机端/首次进入时强制弹出） ===================== -->
+<div id="disclaimer" class="modal-hidden">
+  <div class="modal-box disclaimer-box">
+    <h2 id="disclaimer-title">声 明</h2>
+    <p class="disclaimer-text">我非常爱戴两位老师<br>二创内容与现实无关</p>
+    <button id="btn-disclaimer-ok" class="start-btn">我 已 知 晓</button>
+  </div>
+</div>
+
+<!-- ===================== 关于界面（背景 1787738616076.jpg / 头像 wansi.jpg） ===================== -->
+<div id="about-modal" class="modal-hidden">
+  <button id="btn-about-close" class="about-close" title="关闭">✕</button>
+  <div class="about-box">
+    <img id="about-avatar" class="about-avatar" src="wansi.jpg" alt="作者头像">
+    <div class="about-name">万思帆</div>
+    <div class="about-role">作者 · Author</div>
+    <div class="about-divider"></div>
+    <div class="about-feedback">反馈与建议</div>
+    <a class="about-mail" href="mailto:wansi3526528027@hotmail.com">wansi3526528027@hotmail.com</a>
+    <p class="about-mail-hint">点击上方邮箱即可自动打开邮件客户端发送反馈</p>
+    <div class="about-divider"></div>
+    <div class="about-foot">宇哥 VS 检哥 · 赛博回合制对战</div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
