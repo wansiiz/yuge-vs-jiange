@@ -16,6 +16,52 @@
 'use strict';
 
 /* =====================================================================
+ * 〇、版本与更新配置（以 GitHub Releases 为下载源）
+ * ===================================================================== */
+
+const APP_VERSION = '1.0.1';                // 当前应用版本（与 GitHub Release tag 对应）
+const UPDATE_REPO = 'wansiiz/yuge-vs-jiange'; // GitHub 仓库（Releases 作为更新源）
+
+// 语义化版本比较：返回 1(a新) / -1(b新) / 0(相同)
+function compareVersions(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
+// 检查 GitHub 最新 Release。失败时返回 { error: true }——当前版本照常运行（回档保护）。
+async function checkForUpdate() {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);   // 8 秒超时，避免长时间卡住
+    const res = await fetch('https://api.github.com/repos/' + UPDATE_REPO + '/releases/latest', { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rel = await res.json();
+    const latest = String(rel.tag_name || '').replace(/^v/i, '');
+    const apkAsset = (rel.assets || []).find(a => /\.apk$/i.test(a.name));
+    const webAsset = (rel.assets || []).find(a => /\.zip$/i.test(a.name));
+    return {
+      error: false,
+      hasNew: compareVersions(latest, APP_VERSION) > 0,
+      latest,
+      current: APP_VERSION,
+      note: rel.name || rel.tag_name,
+      apkUrl: apkAsset ? apkAsset.browser_download_url : null,
+      webUrl: webAsset ? webAsset.browser_download_url : null,
+      releaseUrl: rel.html_url,
+    };
+  } catch (e) {
+    return { error: true, message: e.message, current: APP_VERSION };
+  }
+}
+
+/* =====================================================================
  * 一、素材配置区
  * ===================================================================== */
 
@@ -907,10 +953,51 @@ function bindEvents() {
   $('btn-about').addEventListener('click', () => {
     $('about-modal').classList.remove('modal-hidden');
     audio.play('ui_click');
+    renderUpdateStatus();            // 打开关于界面时（重新）检查更新
   });
   $('btn-about-close').addEventListener('click', () => {
     $('about-modal').classList.add('modal-hidden');
   });
+
+  // ---- 同步更新：以 GitHub Releases 为下载源 ----
+  // 填充当前版本号
+  $('about-cur-ver').textContent = APP_VERSION;
+
+  // 渲染更新状态（回档保护：检查失败时当前版本照常运行）
+  function renderUpdateStatus() {
+    const status = $('about-update-status');
+    const actions = $('about-update-actions');
+    const retry = $('btn-update-retry');
+    status.textContent = '正在检查更新…';
+    actions.style.display = 'none';
+    retry.style.display = 'none';
+
+    checkForUpdate().then((info) => {
+      if (info.error) {
+        // 检查失败：不影响当前版本（回档保护），提示重试
+        status.textContent = '⚠️ 检查更新失败（网络异常），当前版本不受影响';
+        retry.style.display = '';
+        return;
+      }
+      if (info.hasNew) {
+        // 发现新版本：提供 APK / 网页版下载（GitHub Releases 为下载源）
+        status.textContent = '🎉 发现新版本 v' + info.latest + '（当前 v' + info.current + '）';
+        const apk = $('btn-dl-apk');
+        const web = $('btn-dl-web');
+        apk.href = info.apkUrl || info.releaseUrl;
+        web.href = info.webUrl || info.releaseUrl;
+        if (!info.apkUrl) apk.style.display = 'none';
+        if (!info.webUrl) web.style.display = 'none';
+        actions.style.display = 'flex';
+      } else {
+        status.textContent = '✅ 已是最新版本 v' + info.current;
+        retry.style.display = 'none';
+      }
+    });
+  }
+
+  // 重新检查按钮
+  $('btn-update-retry').addEventListener('click', renderUpdateStatus);
 
   // 读取当前设置（模式 + AI 控制方）
   const getSettings = () => ({
