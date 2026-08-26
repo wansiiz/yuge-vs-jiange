@@ -685,6 +685,25 @@ select:focus { border-color: var(--cyan); box-shadow: 0 0 8px rgba(34,211,238,0.
   display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: stretch;
 }
 
+/* ---------- 更新失败：备用下载源询问弹窗 ---------- */
+#fallback-modal {
+  position: fixed; inset: 0; z-index: 155;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+}
+.fallback-box { border-color: var(--gold); box-shadow: 0 0 60px rgba(255,179,0,0.35); }
+#fallback-title { color: var(--gold); text-shadow: 0 0 20px rgba(255,179,0,0.6); font-size: 30px; }
+.fallback-text { font-size: 14px; line-height: 1.9; color: var(--text); }
+.fallback-source {
+  font-size: 15px; font-weight: 700; color: var(--cyan);
+  padding: 6px 16px; border: 1px solid rgba(34,211,238,0.45); border-radius: 20px;
+}
+.fallback-pass { font-size: 16px; color: var(--text); letter-spacing: 2px; }
+.fallback-pass b { color: var(--gold); font-size: 20px; }
+.fallback-hint { font-size: 11px; color: var(--dim); }
+.fallback-btns { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+
 /* ---------- 小屏适配 ---------- */
 @media (max-width: 1080px) {
   #stage { grid-template-columns: 1fr; grid-template-rows: auto auto auto; align-content: start; gap: 8px; min-height: 320px; }
