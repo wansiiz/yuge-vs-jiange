@@ -211,13 +211,28 @@
     <div class="about-divider"></div>
     <!-- 同步更新：以 GitHub Releases 为下载源 -->
     <div class="about-update">
-      <div class="about-ver">当前版本 v<span id="about-cur-ver">1.0.1</span></div>
+      <div class="about-ver">当前版本 v<span id="about-cur-ver">1.0.2</span></div>
       <div id="about-update-status" class="about-update-status">正在检查更新…</div>
       <div id="about-update-actions" class="about-update-actions" style="display:none">
         <a id="btn-dl-apk" class="about-mail" href="#" target="_blank" rel="noopener">⬇️ 下载手机版 APK</a>
         <a id="btn-dl-web" class="about-mail" href="#" target="_blank" rel="noopener">⬇️ 下载网页版 ZIP</a>
       </div>
       <button id="btn-update-retry" class="ctl-btn" style="display:none">🔄 重新检查</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 更新失败 → 备用下载源询问弹窗 ===================== -->
+<div id="fallback-modal" class="modal-hidden">
+  <div class="modal-box fallback-box">
+    <h2 id="fallback-title">更新失败</h2>
+    <p class="fallback-text">当前无法从 GitHub 检查更新（网络异常），当前版本不受影响。<br>是否前往<b>备用下载源</b>更新？</p>
+    <div class="fallback-source">备用源：蓝奏云网盘</div>
+    <div class="fallback-pass">访问密码：<b>c6c4</b></div>
+    <p class="fallback-hint">跳转时将自动复制密码，进入网盘后粘贴即可</p>
+    <div class="fallback-btns">
+      <button id="btn-fallback-go" class="start-btn">⬇️ 前往备用源</button>
+      <button id="btn-fallback-cancel" class="ctl-btn">暂不更新</button>
     </div>
   </div>
 </div>
