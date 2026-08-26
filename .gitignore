@@ -1,0 +1,22 @@
+# ===== 不随仓库发布的文件 =====
+
+# Android 构建工具链（JDK + SDK，体积巨大，按需本地安装）
+android/toolchain/
+android/build/
+
+# 构建中间产物（build.ps1 会自动重新生成）
+android/app/src/main/assets/
+
+# 签名密钥（安全：不应公开，build.ps1 会自动生成）
+android/debug.keystore
+android/YuGeJiange.apk.idsig
+
+# 测试页
+test_*.html
+
+# 系统/临时文件
+*.tmp
+Thumbs.db
+.DS_Store
+
+s.png
