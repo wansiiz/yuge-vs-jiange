@@ -19,8 +19,38 @@
  * 〇、版本与更新配置（以 GitHub Releases 为下载源）
  * ===================================================================== */
 
-const APP_VERSION = '1.0.1';                // 当前应用版本（与 GitHub Release tag 对应）
+const APP_VERSION = '1.0.2';                // 当前应用版本（与 GitHub Release tag 对应）
 const UPDATE_REPO = 'wansiiz/yuge-vs-jiange'; // GitHub 仓库（Releases 作为更新源）
+
+// 备用下载源（GitHub 更新失败时询问用户前往）
+const FALLBACK_SOURCE = {
+  url: 'https://wwbdp.lanzoum.com/b01gi9lhva', // 蓝奏云网盘分享页
+  password: 'c6c4',                            // 访问密码（跳转时自动复制）
+  label: '蓝奏云网盘备用下载源',
+};
+
+// 复制文本到剪贴板（优先 Clipboard API，file:// / WebView 下退回 execCommand）
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => legacyCopy(text));
+  }
+  return legacyCopy(text);
+}
+// 同步复制（在点击手势内调用最可靠）：成功返回 true
+function legacyCopySync(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+function legacyCopy(text) {
+  return legacyCopySync(text) ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+}
 
 // 语义化版本比较：返回 1(a新) / -1(b新) / 0(相同)
 function compareVersions(a, b) {
@@ -974,9 +1004,10 @@ function bindEvents() {
 
     checkForUpdate().then((info) => {
       if (info.error) {
-        // 检查失败：不影响当前版本（回档保护），提示重试
+        // 检查失败：回档保护（当前版本照常运行）+ 询问是否前往备用下载源
         status.textContent = '⚠️ 检查更新失败（网络异常），当前版本不受影响';
         retry.style.display = '';
+        showFallbackPrompt();              // 弹出备用下载源询问
         return;
       }
       if (info.hasNew) {
@@ -998,6 +1029,30 @@ function bindEvents() {
 
   // 重新检查按钮
   $('btn-update-retry').addEventListener('click', renderUpdateStatus);
+
+  // ---- 备用下载源（更新失败时询问用户）----
+  // 弹出询问窗（含备用源地址与访问密码）
+  function showFallbackPrompt() {
+    $('fallback-modal').classList.remove('modal-hidden');
+  }
+  // 前往备用源：自动复制密码 → 跳转网盘
+  $('btn-fallback-go').addEventListener('click', () => {
+    $('fallback-modal').classList.add('modal-hidden');
+    // 点击手势内同步复制（execCommand 最可靠），失败再走异步 Clipboard API 兜底
+    let copied = legacyCopySync(FALLBACK_SOURCE.password);
+    if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(FALLBACK_SOURCE.password).then(() => {}).catch(() => {});
+    }
+    spawnFloat(window.innerWidth / 2, window.innerHeight * 0.3,
+      copied ? '🔑 密码已复制 c6c4' : '密码：c6c4（请手动复制）', 'state');
+    // 跳转备用下载源（APK 内由 WebView 拦截打开系统浏览器）
+    window.open(FALLBACK_SOURCE.url, '_blank');
+  });
+  // 暂不更新：关闭弹窗，留在当前版本（回档）
+  $('btn-fallback-cancel').addEventListener('click', () => {
+    $('fallback-modal').classList.add('modal-hidden');
+    audio.play('ui_click');
+  });
 
   // 读取当前设置（模式 + AI 控制方）
   const getSettings = () => ({
